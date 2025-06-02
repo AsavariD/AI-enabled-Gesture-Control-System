@@ -3,6 +3,18 @@ import mediapipe as mp
 
 # import tensorflow as tf
 import serial
+import time
+
+arduino = serial.Serial(port="COM6", baudrate=115200, timeout=0.1)
+arduino_num = "0"
+
+
+def write_read(x):
+    arduino.write(x.encode())
+    time.sleep(0.1)
+    data = arduino.readline()
+    return data
+
 
 BaseOptions = mp.tasks.BaseOptions
 GestureRecognizer = mp.tasks.vision.GestureRecognizer
@@ -64,11 +76,14 @@ while True:
             print(f"Detected: {gesture_name} (Confidence: {confidence:.2f})")
 
             if gesture_name == "Unknown" and confidence > 0.7:
-                arduino_num = 0
-            elif gesture_name == "Closed_fist" and confidence > 0.7:
-                arduino_num = 1
+                arduino_num = "0"
+            elif gesture_name == "Closed_Fist" and confidence > 0.7:
+                arduino_num = "1"
             elif gesture_name == "Open_Palm" and confidence > 0.7:
-                arduino_num = 2
+                arduino_num = "2"
+
+            val = write_read(arduino_num)
+            print(f"Arduino replied: {val}")
 
             # draw points
             if gesture.hand_landmarks:
