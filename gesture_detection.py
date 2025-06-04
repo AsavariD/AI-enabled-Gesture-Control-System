@@ -4,16 +4,30 @@ import mediapipe as mp
 # import tensorflow as tf
 import serial
 import time
+import socket
 
-arduino = serial.Serial(port="COM6", baudrate=115200, timeout=0.1)
+# arduino = serial.Serial(port="COM6", baudrate=115200, timeout=0.1)
+ARDUINO_IP = "192.168.1.23"
+PORT = 80
 arduino_num = "0"
 
 
-def write_read(x):
-    arduino.write(x.encode())
-    time.sleep(0.1)
-    data = arduino.readline()
-    return data
+def send_num(x):
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((ARDUINO_IP, PORT))
+            s.sendall((x + "\n").encode())  # end with newline
+            response = s.recv(1024).decode()
+            print("Arduino response:", response)
+    except Exception as e:
+        print("Error:", e)
+
+
+# def write_read(x):
+#     arduino.write(x.encode())
+#     time.sleep(0.1)
+#     data = arduino.readline()
+#     return data
 
 
 BaseOptions = mp.tasks.BaseOptions
@@ -75,14 +89,14 @@ while True:
             # Print to console
             print(f"Detected: {gesture_name} (Confidence: {confidence:.2f})")
 
-            if gesture_name == "Unknown" and confidence > 0.7:
+            if gesture_name == "Unknown" and confidence > 0.6:
                 arduino_num = "0"
-            elif gesture_name == "Closed_Fist" and confidence > 0.7:
+            elif gesture_name == "Closed_Fist" and confidence > 0.6:
                 arduino_num = "1"
-            elif gesture_name == "Open_Palm" and confidence > 0.7:
+            elif gesture_name == "Open_Palm" and confidence > 0.6:
                 arduino_num = "2"
 
-            val = write_read(arduino_num)
+            val = send_num(arduino_num)
             print(f"Arduino replied: {val}")
 
             # draw points
